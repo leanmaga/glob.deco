@@ -5,22 +5,22 @@ const connectDB = require("./config/database");
 
 const app = express();
 
-// CORS configurado correctamente - permite CUALQUIER dominio de Vercel
+// CORS con CLIENT_URL + múltiples orígenes
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.CLIENT_URL, // Variable de entorno
+  "https://glob-deco.vercel.app",
+  "https://glob-deco-wtv4.vercel.app",
+].filter(Boolean); // Elimina valores undefined/null
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permitir requests sin origin (como mobile apps o curl)
+      // Permitir requests sin origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
 
-      // Lista de orígenes permitidos
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://glob-deco.vercel.app",
-        "https://glob-deco-wtv4.vercel.app",
-      ];
-
-      // Permitir cualquier subdominio de vercel.app
+      // Permitir orígenes específicos O cualquier subdominio de vercel.app
       if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
         callback(null, true);
       } else {
@@ -56,6 +56,7 @@ app.get("/api/health", (req, res) => {
     message: "Servidor funcionando correctamente",
     timestamp: new Date().toISOString(),
     cors: "enabled",
+    allowedOrigins: allowedOrigins,
   });
 });
 
@@ -96,7 +97,7 @@ const startServer = async () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 Entorno: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 API disponible en: http://localhost:${PORT}/api`);
-      console.log(`✅ CORS habilitado para múltiples orígenes`);
+      console.log(`✅ CORS habilitado para:`, allowedOrigins);
     });
   } catch (error) {
     console.error("❌ Error al iniciar el servidor:", error.message);
