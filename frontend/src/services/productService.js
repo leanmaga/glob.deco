@@ -26,6 +26,7 @@ const productService = {
       category: productData.category,
       stock: productData.stock ? parseInt(productData.stock) : null,
       featured: productData.featured || false,
+      images: productData.images || [], // 👈 AGREGAR IMÁGENES
     };
 
     const response = await api.post("/products", data);
@@ -40,6 +41,7 @@ const productService = {
       category: productData.category,
       stock: productData.stock ? parseInt(productData.stock) : null,
       featured: productData.featured || false,
+      images: productData.images || [], // 👈 AGREGAR IMÁGENES
     };
 
     const response = await api.put(`/products/${id}`, data);

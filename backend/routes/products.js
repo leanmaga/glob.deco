@@ -20,6 +20,30 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Obtener productos por categoría (público)
+router.get("/category/:categoryId", async (req, res) => {
+  try {
+    const products = await Product.find({
+      category: req.params.categoryId,
+      isActive: true,
+    })
+      .populate("category", "name icon")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      products,
+      count: products.length,
+    });
+  } catch (error) {
+    console.error("Error al obtener productos por categoría:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al obtener productos por categoría",
+    });
+  }
+});
+
 // Obtener producto por ID (público)
 router.get("/:id", async (req, res) => {
   try {
