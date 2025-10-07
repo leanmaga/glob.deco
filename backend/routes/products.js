@@ -3,70 +3,30 @@ const router = express.Router();
 const Product = require("../models/Product");
 const { protect, isAdmin } = require("../middleware/auth");
 
-// ==========================================
-// RUTAS GET - ¡ESTAS FALTABAN!
-// ==========================================
-
-// Obtener todos los productos (público - solo activos)
+// Obtener todos los productos (público)
 router.get("/", async (req, res) => {
   try {
-    const { category } = req.query;
-
-    const filter = { isActive: true };
-    if (category) {
-      filter.category = category;
-    }
-
-    const products = await Product.find(filter)
+    const products = await Product.find({ isActive: true })
       .populate("category", "name icon")
-      .sort({ featured: -1, order: 1, createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
-      count: products.length,
       products,
     });
   } catch (error) {
     console.error("Error al obtener productos:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al obtener productos",
-    });
+    res.status(500).json({ message: "Error al obtener productos" });
   }
 });
 
-// Obtener productos por categoría
-router.get("/category/:categoryId", async (req, res) => {
-  try {
-    const products = await Product.find({
-      category: req.params.categoryId,
-      isActive: true,
-    })
-      .populate("category", "name icon")
-      .sort({ featured: -1, order: 1 })
-      .lean();
-
-    res.json({
-      success: true,
-      count: products.length,
-      products,
-    });
-  } catch (error) {
-    console.error("Error al obtener productos por categoría:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al obtener productos",
-    });
-  }
-});
-
-// Obtener un producto específico
+// Obtener producto por ID (público)
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
-      .populate("category", "name icon")
-      .lean();
+    const product = await Product.findById(req.params.id).populate(
+      "category",
+      "name icon"
+    );
 
     if (!product) {
       return res.status(404).json({
@@ -81,21 +41,15 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("Error al obtener producto:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al obtener producto",
-    });
+    res.status(500).json({ message: "Error al obtener el producto" });
   }
 });
 
-// ==========================================
-// RUTAS POST/PUT/DELETE (admin)
-// ==========================================
-
-// Crear producto (admin)
+// Crear producto (admin) - CON IMÁGENES
 router.post("/", protect, isAdmin, async (req, res) => {
   try {
-    const { name, description, price, category, stock, featured } = req.body;
+    const { name, description, price, category, stock, featured, images } =
+      req.body;
 
     // Validación
     if (!name || !price || !category) {
@@ -114,7 +68,7 @@ router.post("/", protect, isAdmin, async (req, res) => {
       });
     }
 
-    // Crear producto
+    // Crear producto CON IMÁGENES
     const product = await Product.create({
       name: name.trim(),
       description: description?.trim() || "",
@@ -122,7 +76,7 @@ router.post("/", protect, isAdmin, async (req, res) => {
       category,
       stock: stock || null,
       featured: featured || false,
-      images: [],
+      images: images || [], // 👈 NUEVO: Guardar imágenes
       isActive: true,
     });
 
@@ -163,10 +117,11 @@ router.post("/", protect, isAdmin, async (req, res) => {
   }
 });
 
-// Actualizar producto
+// Actualizar producto (admin) - CON IMÁGENES
 router.put("/:id", protect, isAdmin, async (req, res) => {
   try {
-    const { name, description, price, category, stock, featured } = req.body;
+    const { name, description, price, category, stock, featured, images } =
+      req.body;
 
     const updateData = {
       name: name?.trim(),
@@ -175,6 +130,7 @@ router.put("/:id", protect, isAdmin, async (req, res) => {
       category,
       stock: stock || null,
       featured: featured || false,
+      images: images || [], // 👈 NUEVO: Actualizar imágenes
     };
 
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
@@ -202,7 +158,7 @@ router.put("/:id", protect, isAdmin, async (req, res) => {
   }
 });
 
-// Eliminar producto
+// Eliminar producto (admin)
 router.delete("/:id", protect, isAdmin, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -213,6 +169,14 @@ router.delete("/:id", protect, isAdmin, async (req, res) => {
         message: "Producto no encontrado",
       });
     }
+
+    // TODO: Eliminar imágenes de Cloudinary si el producto las tiene
+    // const cloudinary = require("../config/cloudinary").cloudinary;
+    // if (product.images && product.images.length > 0) {
+    //   for (const image of product.images) {
+    //     await cloudinary.uploader.destroy(image.publicId);
+    //   }
+    // }
 
     await product.deleteOne();
 

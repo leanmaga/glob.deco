@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import categoryService from "../../services/categoryService";
 import productService from "../../services/productService";
+import ImageUpload from "./ImageUpload";
 
 const ProductManager = () => {
   const [products, setProducts] = useState([]);
@@ -18,6 +19,7 @@ const ProductManager = () => {
     category: "",
     stock: null,
     featured: false,
+    images: [], // 👈 NUEVO
   });
 
   useEffect(() => {
@@ -56,6 +58,14 @@ const ProductManager = () => {
     }));
   };
 
+  // 👇 NUEVA FUNCIÓN para manejar cambios de imágenes
+  const handleImagesChange = (newImages) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: newImages,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -91,6 +101,7 @@ const ProductManager = () => {
       category: product.category._id || product.category,
       stock: product.stock,
       featured: product.featured || false,
+      images: product.images || [], // 👈 NUEVO
     });
     setEditingId(product._id);
     setIsCreating(true);
@@ -125,6 +136,7 @@ const ProductManager = () => {
       category: "",
       stock: null,
       featured: false,
+      images: [], // 👈 NUEVO
     });
     setEditingId(null);
     setIsCreating(false);
@@ -204,120 +216,132 @@ const ProductManager = () => {
             {editingId ? "✏️ Editar Producto" : "➕ Nuevo Producto"}
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                placeholder="Ej: Arco de Globos Grande"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Precio <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                placeholder="15000"
-                min={0}
-                step={100}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Categoría <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                required
-              >
-                <option value="">Seleccionar categoría</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stock (opcional)
-              </label>
-              <input
-                type="number"
-                name="stock"
-                value={formData.stock || ""}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                placeholder="Dejar vacío para ilimitado"
-                min={0}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Dejá vacío para stock ilimitado
-              </p>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                rows={3}
-                placeholder="Descripción del producto"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="flex items-center cursor-pointer">
+          <div className="space-y-6">
+            {/* Información Básica */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre <span className="text-red-500">*</span>
+                </label>
                 <input
-                  type="checkbox"
-                  name="featured"
-                  checked={formData.featured}
+                  type="text"
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Ej: Arco de Globos Grande"
+                  required
                 />
-                <span className="ml-2 text-sm font-medium text-gray-700">
-                  Marcar como destacado ⭐
-                </span>
-              </label>
-            </div>
-          </div>
+              </div>
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={handleSubmit}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              {editingId ? "💾 Actualizar" : "✓ Crear"}
-            </button>
-            <button
-              onClick={resetForm}
-              className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-            >
-              Cancelar
-            </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Precio <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="15000"
+                  min={0}
+                  step={100}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Categoría <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  required
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.icon} {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock (opcional)
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={formData.stock || ""}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Dejar vacío para ilimitado"
+                  min={0}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Dejá vacío para stock ilimitado
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  rows={3}
+                  placeholder="Descripción del producto"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="featured"
+                    checked={formData.featured}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <span className="ml-2 text-sm font-medium text-gray-700">
+                    Marcar como destacado ⭐
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* 👇 COMPONENTE DE UPLOAD DE IMÁGENES */}
+            <div className="border-t border-gray-200 pt-6">
+              <ImageUpload
+                images={formData.images}
+                onImagesChange={handleImagesChange}
+                maxImages={5}
+              />
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSubmit}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              >
+                {editingId ? "💾 Actualizar" : "✓ Crear"}
+              </button>
+              <button
+                onClick={resetForm}
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -345,6 +369,9 @@ const ProductManager = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Imagen
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nombre
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -359,62 +386,90 @@ const ProductManager = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {products.map((product) => (
-                  <tr
-                    key={product._id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
+                  <tr key={product._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0].url}
+                          alt={product.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center text-2xl">
+                          📦
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {product.featured && (
-                          <span className="text-yellow-500 mr-2">⭐</span>
+                          <span className="mr-2" title="Destacado">
+                            ⭐
+                          </span>
                         )}
                         <span className="text-sm font-medium text-gray-900">
                           {product.name}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {getCategoryName(product.category)}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-600">
+                        {getCategoryName(product.category)}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                      ${product.price.toLocaleString("es-AR")}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">
+                        ${product.price.toLocaleString("es-AR")}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {product.stock !== null ? product.stock : "Ilimitado"}
-                    </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          product.stock === null
+                            ? "bg-green-100 text-green-800"
+                            : product.stock > 0
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {product.stock === null
+                          ? "Ilimitado"
+                          : product.stock > 0
+                          ? `${product.stock} unidades`
+                          : "Sin stock"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
                           product.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {product.isActive ? "✓ Activo" : "✕ Inactivo"}
+                        {product.isActive ? "✓ Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="text-purple-600 hover:text-purple-900 font-medium"
-                        >
-                          ✏️ Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product._id)}
-                          className="text-red-600 hover:text-red-900 font-medium"
-                        >
-                          🗑️ Eliminar
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="text-purple-600 hover:text-purple-900 mr-4"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product._id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        🗑️ Eliminar
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -424,32 +479,31 @@ const ProductManager = () => {
         )}
       </div>
 
-      {products.length > 0 && (
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-blue-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-blue-700">
-                Los productos con stock null se mostrarán como "ilimitados". Los
-                productos destacados aparecen con una estrella en el Event
-                Builder.
-              </p>
-            </div>
+      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg
+              className="h-5 w-5 text-blue-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-blue-700">
+              Los productos con stock <strong>null</strong> se mostrarán como{" "}
+              <em>"ilimitados"</em>. Los productos destacados aparecen con una
+              estrella en el Event Builder.
+            </p>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
