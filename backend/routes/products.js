@@ -3,9 +3,96 @@ const router = express.Router();
 const Product = require("../models/Product");
 const { protect, isAdmin } = require("../middleware/auth");
 
-// ... otras rutas get ...
+// ==========================================
+// RUTAS GET - ¡ESTAS FALTABAN!
+// ==========================================
 
-// Crear producto (admin) - SIN imágenes por ahora
+// Obtener todos los productos (público - solo activos)
+router.get("/", async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    const filter = { isActive: true };
+    if (category) {
+      filter.category = category;
+    }
+
+    const products = await Product.find(filter)
+      .populate("category", "name icon")
+      .sort({ featured: -1, order: 1, createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error("Error al obtener productos:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al obtener productos",
+    });
+  }
+});
+
+// Obtener productos por categoría
+router.get("/category/:categoryId", async (req, res) => {
+  try {
+    const products = await Product.find({
+      category: req.params.categoryId,
+      isActive: true,
+    })
+      .populate("category", "name icon")
+      .sort({ featured: -1, order: 1 })
+      .lean();
+
+    res.json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error("Error al obtener productos por categoría:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al obtener productos",
+    });
+  }
+});
+
+// Obtener un producto específico
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate("category", "name icon")
+      .lean();
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Producto no encontrado",
+      });
+    }
+
+    res.json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    console.error("Error al obtener producto:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al obtener producto",
+    });
+  }
+});
+
+// ==========================================
+// RUTAS POST/PUT/DELETE (admin)
+// ==========================================
+
+// Crear producto (admin)
 router.post("/", protect, isAdmin, async (req, res) => {
   try {
     const { name, description, price, category, stock, featured } = req.body;
