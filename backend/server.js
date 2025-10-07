@@ -5,11 +5,31 @@ const connectDB = require("./config/database");
 
 const app = express();
 
-// Middleware
+// CORS configurado correctamente - permite CUALQUIER dominio de Vercel
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Permitir requests sin origin (como mobile apps o curl)
+      if (!origin) return callback(null, true);
+
+      // Lista de orígenes permitidos
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://glob-deco.vercel.app",
+        "https://glob-deco-wtv4.vercel.app",
+      ];
+
+      // Permitir cualquier subdominio de vercel.app
+      if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -17,14 +37,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Logging en desarrollo
-if (process.env.NODE_ENV === "development") {
+if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
     next();
   });
 }
 
-// Rutas
+// Rutas con prefijo /api
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/categories", require("./routes/categories"));
 app.use("/api/products", require("./routes/products"));
@@ -35,6 +55,21 @@ app.get("/api/health", (req, res) => {
     success: true,
     message: "Servidor funcionando correctamente",
     timestamp: new Date().toISOString(),
+    cors: "enabled",
+  });
+});
+
+// Ruta raíz
+app.get("/", (req, res) => {
+  res.json({
+    message: "API de Glob.deco",
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth",
+      categories: "/api/categories",
+      products: "/api/products",
+    },
   });
 });
 
@@ -50,7 +85,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// IMPORTANTE: Función async para iniciar el servidor
+// Función async para iniciar el servidor
 const startServer = async () => {
   try {
     // 1. Primero conectar a MongoDB
@@ -61,6 +96,7 @@ const startServer = async () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 Entorno: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 API disponible en: http://localhost:${PORT}/api`);
+      console.log(`✅ CORS habilitado para múltiples orígenes`);
     });
   } catch (error) {
     console.error("❌ Error al iniciar el servidor:", error.message);
