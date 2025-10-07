@@ -5,22 +5,19 @@ const connectDB = require("./config/database");
 
 const app = express();
 
-// CORS con CLIENT_URL + múltiples orígenes
+// CORS configurado
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
-  process.env.CLIENT_URL, // Variable de entorno
+  process.env.CLIENT_URL,
   "https://glob-deco.vercel.app",
   "https://glob-deco-wtv4.vercel.app",
-].filter(Boolean); // Elimina valores undefined/null
+].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permitir requests sin origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
-
-      // Permitir orígenes específicos O cualquier subdominio de vercel.app
       if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
         callback(null, true);
       } else {
@@ -48,6 +45,7 @@ if (process.env.NODE_ENV !== "production") {
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/categories", require("./routes/categories"));
 app.use("/api/products", require("./routes/products"));
+app.use("/api/upload", require("./routes/upload")); // 👈 NUEVA RUTA
 
 // Ruta de salud
 app.get("/api/health", (req, res) => {
@@ -70,6 +68,7 @@ app.get("/", (req, res) => {
       auth: "/api/auth",
       categories: "/api/categories",
       products: "/api/products",
+      upload: "/api/upload",
     },
   });
 });
@@ -89,15 +88,13 @@ const PORT = process.env.PORT || 5000;
 // Función async para iniciar el servidor
 const startServer = async () => {
   try {
-    // 1. Primero conectar a MongoDB
     await connectDB();
-
-    // 2. Luego levantar el servidor
     app.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 Entorno: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 API disponible en: http://localhost:${PORT}/api`);
       console.log(`✅ CORS habilitado para:`, allowedOrigins);
+      console.log(`📤 Upload de imágenes: habilitado`);
     });
   } catch (error) {
     console.error("❌ Error al iniciar el servidor:", error.message);
@@ -105,7 +102,6 @@ const startServer = async () => {
   }
 };
 
-// Iniciar el servidor
 startServer();
 
 process.on("unhandledRejection", (err) => {
