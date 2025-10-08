@@ -8,6 +8,7 @@ const app = express();
 // CORS configurado
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "http://localhost:3000",
   process.env.CLIENT_URL,
   "https://glob-deco.vercel.app",
@@ -17,10 +18,13 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("🔍 Origin recibido:", origin);
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        console.log("✅ Origin permitido");
         callback(null, true);
       } else {
+        console.log("❌ Origin rechazado:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
